@@ -4,6 +4,8 @@ const cube=document.querySelector('#cube'),rollButton=document.querySelector('#r
 let current=0;const flipped=new Set();
 const baseUi={es:{action:'TU ACCIÓN',flip:'Ver reto',back:'Volver'},en:{action:'YOUR ACTION',flip:'See challenge',back:'Back'},it:{action:'LA TUA AZIONE',flip:'Vedi sfida',back:'Indietro'},fr:{action:'TON ACTION',flip:'Voir le défi',back:'Retour'},pt:{action:'SUA AÇÃO',flip:'Ver desafio',back:'Voltar'},am:{action:'TU ACCIÓN',flip:'Ver reto',back:'Volver'}};
 function lang(){return language?language.value:(config.defaultLang||'es')}
+function visibleCode(option){return(option.textContent||option.label||option.value||'').trim().slice(0,2).toLowerCase()}
+function setInitialLanguage(){if(!language)return;const requested=(new URLSearchParams(location.search).get('lang')||localStorage.getItem('livingPeaceSelectorLang')||config.defaultLang||'es').toLowerCase();const options=[...language.options];const byLabel=options.find(option=>visibleCode(option)===requested);const byValue=options.find(option=>option.value===requested&&visibleCode(option)===requested);const match=byLabel||byValue;if(match)language.value=match.value}
 function pick(value,fallback=''){if(value&&typeof value==='object')return value[lang()]||value[config.defaultLang||'es']||value.es||Object.values(value)[0]||fallback;return value||fallback}
 function ui(key){const custom=config.ui&&config.ui[lang()]&&config.ui[lang()][key];return custom||(baseUi[lang()]&&baseUi[lang()][key])||baseUi.es[key]}
 function faceData(i){const face=config.faces[i];return{image:pick(face.image),title:pick(face.title),short:pick(face.short),message:pick(face.message)}}
@@ -12,5 +14,5 @@ function renderCards(){grid.innerHTML=config.faces.map((face,i)=>{const data=fac
 function showFace(i){current=i;cube.style.transform=rotations[i];result.classList.add('changing');setTimeout(()=>{const data=faceData(i);resultImage.src=data.image;resultImage.alt=data.title;resultTitle.textContent=data.title;resultText.textContent=data.message;result.classList.remove('changing')},170);renderCards()}
 function toggleCard(i){flipped.has(i)?flipped.delete(i):flipped.add(i);showFace(i)}
 function roll(){rollButton.disabled=true;const next=Math.floor(Math.random()*6),x=720+Math.floor(Math.random()*3)*360,y=720+Math.floor(Math.random()*3)*360;cube.style.transform=`rotateX(${x}deg) rotateY(${y}deg)`;setTimeout(()=>{showFace(next);rollButton.disabled=false},1050)}
-function changeLanguage(){document.documentElement.lang=lang();updateCubeImages();showFace(current)}
-rollButton.addEventListener('click',roll);if(language)language.addEventListener('change',changeLanguage);updateCubeImages();renderCards();
+function changeLanguage(){document.documentElement.lang=visibleCode(language&&language.selectedOptions[0]?language.selectedOptions[0]:{textContent:lang()})||lang();localStorage.setItem('livingPeaceSelectorLang',document.documentElement.lang);updateCubeImages();showFace(current)}
+setInitialLanguage();rollButton.addEventListener('click',roll);if(language)language.addEventListener('change',changeLanguage);changeLanguage();updateCubeImages();renderCards();

@@ -38,6 +38,14 @@ const messageCard=document.querySelector('#messageCard');
 let current=0;
 const flippedCards=new Set();
 
+function visibleCode(option){return(option.textContent||option.label||option.value||'').trim().slice(0,2).toLowerCase()}
+function setInitialLanguage(){
+ const requested=(new URLSearchParams(location.search).get('lang')||localStorage.getItem('livingPeaceSelectorLang')||'es').toLowerCase();
+ const options=[...language.options];
+ const match=options.find(option=>visibleCode(option)===requested)||options.find(option=>option.value===requested&&visibleCode(option)===requested);
+ if(match)language.value=match.value;
+}
+
 function renderGrid(){
  const lang=language.value;
  grid.innerHTML=faces.map((face,index)=>`<button class="value-card ${current===index?'active':''} ${flippedCards.has(index)?'flipped':''}" style="--accent:${face.color}" type="button" data-index="${index}" aria-label="${face.text[lang][0]}" aria-pressed="${flippedCards.has(index)}"><span class="value-card-inner"><span class="value-card-face value-card-front"><span class="value-image"><img src="${faceImage(index,lang)}" alt="${face.text[lang][0]}" loading="lazy"></span><span class="value-copy"><span class="value-index">0${index+1}</span><h3>${face.text[lang][0]}</h3><p>${face.text[lang][1]}</p></span><span class="flip-cue"><span>${ui[lang].flip}</span><span class="flip-icon" aria-hidden="true">↻</span></span></span><span class="value-card-face value-card-back"><span><span class="value-index">${ui[lang].today}</span><h3>${face.text[lang][0]}</h3><p>${face.text[lang][1]}</p></span><span class="flip-cue"><span>${ui[lang].back}</span><span class="flip-icon" aria-hidden="true">↺</span></span></span></span></button>`).join('');
@@ -67,7 +75,7 @@ function roll(){
 }
 
 function setLanguage(){
- const lang=language.value;document.documentElement.lang=lang;
+ const lang=language.value;document.documentElement.lang=visibleCode(language.selectedOptions[0])||lang;localStorage.setItem('livingPeaceSelectorLang',document.documentElement.lang);
  document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=ui[lang][el.dataset.ui]);updateCubeImages(lang);showMessage(current);renderGrid();
 }
 
@@ -75,4 +83,4 @@ function updateCubeImages(lang){
  cube.querySelectorAll('img[data-face]').forEach(img=>{img.src=faceImage(Number(img.dataset.face),lang)});
 }
 
-rollButton.addEventListener('click',roll);language.addEventListener('change',setLanguage);renderGrid();
+setInitialLanguage();rollButton.addEventListener('click',roll);language.addEventListener('change',setLanguage);setLanguage();
